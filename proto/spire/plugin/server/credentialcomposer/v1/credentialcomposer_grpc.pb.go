@@ -57,6 +57,14 @@ type CredentialComposerClient interface {
 	// specification, it will be rejected. This function cannot be used to
 	// modify the SPIFFE ID of the JWT-SVID.
 	ComposeWorkloadJWTSVID(ctx context.Context, in *ComposeWorkloadJWTSVIDRequest, opts ...grpc.CallOption) (*ComposeWorkloadJWTSVIDResponse, error)
+	// Composes workload WIT-SVIDs. The server will supply the default
+	// attributes it will apply to the workload WIT-SVID. If the plugin
+	// returns an empty response or NOT_IMPLEMENTED, the server will apply the
+	// default attributes. Otherwise the returned attributes are used. If a
+	// WIT-SVID is produced that does not conform to the SPIFFE WIT-SVID
+	// specification, it will be rejected. This function cannot be used to
+	// modify the sub, cnf or jti claims of the WIT-SVID.
+	ComposeWorkloadWITSVID(ctx context.Context, in *ComposeWorkloadWITSVIDRequest, opts ...grpc.CallOption) (*ComposeWorkloadWITSVIDResponse, error)
 }
 
 type credentialComposerClient struct {
@@ -112,6 +120,15 @@ func (c *credentialComposerClient) ComposeWorkloadJWTSVID(ctx context.Context, i
 	return out, nil
 }
 
+func (c *credentialComposerClient) ComposeWorkloadWITSVID(ctx context.Context, in *ComposeWorkloadWITSVIDRequest, opts ...grpc.CallOption) (*ComposeWorkloadWITSVIDResponse, error) {
+	out := new(ComposeWorkloadWITSVIDResponse)
+	err := c.cc.Invoke(ctx, "/spire.plugin.server.credentialcomposer.v1.CredentialComposer/ComposeWorkloadWITSVID", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CredentialComposerServer is the server API for CredentialComposer service.
 // All implementations must embed UnimplementedCredentialComposerServer
 // for forward compatibility
@@ -155,6 +172,14 @@ type CredentialComposerServer interface {
 	// specification, it will be rejected. This function cannot be used to
 	// modify the SPIFFE ID of the JWT-SVID.
 	ComposeWorkloadJWTSVID(context.Context, *ComposeWorkloadJWTSVIDRequest) (*ComposeWorkloadJWTSVIDResponse, error)
+	// Composes workload WIT-SVIDs. The server will supply the default
+	// attributes it will apply to the workload WIT-SVID. If the plugin
+	// returns an empty response or NOT_IMPLEMENTED, the server will apply the
+	// default attributes. Otherwise the returned attributes are used. If a
+	// WIT-SVID is produced that does not conform to the SPIFFE WIT-SVID
+	// specification, it will be rejected. This function cannot be used to
+	// modify the sub, cnf or jti claims of the WIT-SVID.
+	ComposeWorkloadWITSVID(context.Context, *ComposeWorkloadWITSVIDRequest) (*ComposeWorkloadWITSVIDResponse, error)
 	mustEmbedUnimplementedCredentialComposerServer()
 }
 
@@ -176,6 +201,9 @@ func (UnimplementedCredentialComposerServer) ComposeWorkloadX509SVID(context.Con
 }
 func (UnimplementedCredentialComposerServer) ComposeWorkloadJWTSVID(context.Context, *ComposeWorkloadJWTSVIDRequest) (*ComposeWorkloadJWTSVIDResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ComposeWorkloadJWTSVID not implemented")
+}
+func (UnimplementedCredentialComposerServer) ComposeWorkloadWITSVID(context.Context, *ComposeWorkloadWITSVIDRequest) (*ComposeWorkloadWITSVIDResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ComposeWorkloadWITSVID not implemented")
 }
 func (UnimplementedCredentialComposerServer) mustEmbedUnimplementedCredentialComposerServer() {}
 
@@ -280,6 +308,24 @@ func _CredentialComposer_ComposeWorkloadJWTSVID_Handler(srv interface{}, ctx con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CredentialComposer_ComposeWorkloadWITSVID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ComposeWorkloadWITSVIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CredentialComposerServer).ComposeWorkloadWITSVID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/spire.plugin.server.credentialcomposer.v1.CredentialComposer/ComposeWorkloadWITSVID",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CredentialComposerServer).ComposeWorkloadWITSVID(ctx, req.(*ComposeWorkloadWITSVIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CredentialComposer_ServiceDesc is the grpc.ServiceDesc for CredentialComposer service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -306,6 +352,10 @@ var CredentialComposer_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ComposeWorkloadJWTSVID",
 			Handler:    _CredentialComposer_ComposeWorkloadJWTSVID_Handler,
+		},
+		{
+			MethodName: "ComposeWorkloadWITSVID",
+			Handler:    _CredentialComposer_ComposeWorkloadWITSVID_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
